@@ -24,6 +24,6 @@ if length(exptdata_filename)>1
     end
 end
 [emumodel,emus] = emutracer(mfamodel);
-%emumodel.minset = minconfset(emumodel);
+emumodel.minset = minconfset(emumodel);
 end
 
