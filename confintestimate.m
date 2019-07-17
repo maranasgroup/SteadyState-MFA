@@ -4,7 +4,7 @@ function [res,impres] = confintestimate(res,model)
 
 % determining the set of reactions for which confidence intervals must be
 % computed
-
+options = optimoptions(@linprog,'Display','off');
 N = model.vardata.N;
 vfwd = model.vardata.vfwd;
 vrev = model.vardata.vrev;
@@ -34,7 +34,7 @@ elseif ismember(set,'minset_main')
     %vconf = minconfset(model);
     cid = model.minset;
     %cid(vconf) = true;
-    cid(:,dil) = 0;
+    %cid(:,dil) = 0;
     Aex = sparse(cid);
 elseif ismember(set,'minset_all')
     %vconf = minconfset(model);
@@ -42,7 +42,7 @@ elseif ismember(set,'minset_all')
     Aex = sparse(cid);
 else
     % custom list
-    customlist = model.options.conf_custom;
+    customlist = model.options.custom;
     cid = defid;
     cid(customlist) = true;
     Aex = sparse(diag(cid));
@@ -90,17 +90,27 @@ params.outputflag = 0;
 yb = zeros(nconfs,2);
 for i = 1:nconfs
     g1 = gmod;
-    g1.obj = full(Aex(i,:))';
+    g1.obj = double(full(Aex(i,:)))';
     %if vfwd(confs(i)) == true
     %    g1.obj(confs(i)+1) = -1;
     %end
     %Aex(i,:) = g1.obj';
     g1.modelsense = 'min';
+    %[xxx2,fval2] = linprog(g1.obj,[],[],g1.A,g1.rhs,g1.lb,g1.ub,[],options);
     r = gurobi(g1,params);
     yb(i,1) = r.objval;
+    %yb(i,1) = fval2;
     g1.modelsense = 'max';
     r = gurobi(g1,params);
+    A2 = -g1.A;
+    obj = -g1.obj;
+    rhs = -g1.rhs;
+    lb = g1.lb;
+    ub = g1.ub;
+    %[xxx,fval] = linprog(obj,[],[],A2,rhs,lb,ub,[],options);
+    
     yb(i,2) = r.objval;
+    %yb(i,2) = -fval;
 end
 
 
@@ -134,10 +144,23 @@ c2 = '';
 c1(1:nconfs) = '>';
 c2(1:nconfs) = '<';
 Aex(:,vrev) = Aex(:,vrev) - Aex(:,vfwd);
+A2eq = gmod.A;
+A2neg = -Aex;
+A2pos = Aex;
+A2 = [A2neg;A2pos];
+rhseq = gmod.rhs;
+rhsneg = -ybactual(:,1);
+rhspos = ybactual(:,2);
+rhs2 = [rhsneg;rhspos];
 gmod.A = [gmod.A;sparse([Aex;Aex])];
 gmod.rhs = [gmod.rhs;ybactual(:,1);ybactual(:,2)];
 gmod.sense = [gmod.sense,c1,c2];
-
+A2eq2 = -A2eq;
+rhseq2 = -rhseq;
+A22 = -A2;
+rhs22 = -rhs2;
+lb = g1.lb;
+ub = g1.ub;
 for i = 1:length(res.fluxes)
     g1 = gmod;
     g1.obj(i) = 1;
@@ -145,11 +168,17 @@ for i = 1:length(res.fluxes)
         g1.obj(i+1) = -1;
     end
     g1.modelsense = 'min';
+    %[xxx2,fval2] = linprog(g1.obj,A2,rhs2,A2eq,rhseq,g1.lb,g1.ub,[],options);
     r = gurobi(g1,params);
     res.fluxes(i).vLB = r.objval;
+    %res.fluxes(i).vLB = fval2;
+    obj = -g1.obj;
     g1.modelsense = 'max';
+
+    %[xxx,fval] = linprog(obj,A2,rhs2,A2eq,rhseq,lb,ub,[],options);
     r = gurobi(g1,params);
     res.fluxes(i).vUB = r.objval;
+    %res.fluxes(i).vUB = -fval;
 end
 
 
