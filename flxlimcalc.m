@@ -18,7 +18,7 @@ xmin = bounds(1);
 [maxx,xb,fb] = limflx(x,A,b,actcon,model,Aeq,xmax,r,W,J);
 if fb<fbest
     fbest = fb;
-    xbest = sb;
+    xbest = xb;
 end
 range(2) = maxx;
 
@@ -61,10 +61,6 @@ xsc = max(x,1e-5);
 df = eps*max(diag(H0).*xsc.^2);
 [Q,R,Z,actcon] = initlqz(zeros(0,length(x)),A,-Aeq',actcon);
 alf = 2;
-nu = model.vardata.nu;
-nc = model.vardata.npool;
-nh = model.data.nh;
-N = model.vardata.N;
 
 
 while f<fmax && xcurr <= (xbound-dxmin)
@@ -153,12 +149,8 @@ while f<fmax && xcurr <= (xbound-dxmin)
         f = fx;
         
         if f < fbest
-            %opt = optimset('Display','off','MaxFunEvals',10000000,'TolCon',0);%,'ConstraintTolerance',-1e-7);
-            opt = optimset('Display','Iter','maxiter',10000,'Algorithm','interior-point');
-            Cmat = [N,zeros(nc+nh,1)];
-            v = N*x(1:nu);
-            [x1,~,~,exitflag] = lsqlin(Cmat,v,-A,-b,[],[],[],[],x,opt);
-            %x1 = fmincon(@(x) 1,x,-A,-b,[],[],[],[],[],opt);
+            opt = optimset('Display','off','MaxFunEvals',10000000,'TolCon',0);%,'ConstraintTolerance',-1e-7);
+            x1 = fmincon(@(x) 1,x,-A,-b,[],[],[],[],[],opt);
             [rx,W,Jx] = simlabdist(x1,model);
             fz = rx'*W*rx;
             if fz < fbest
@@ -325,7 +317,7 @@ if isempty(blkcon)
     blkcon = [];
 else
     db = db(blkcon);
-    slack = (b(blkcon)-(A(blkcon,:)*x0));
+    slack = min(0,(b(blkcon)-(A(blkcon,:)*x0)));
     [h,ndx] = min(slack./db);
     if h<=1
         h = min(h,1);
