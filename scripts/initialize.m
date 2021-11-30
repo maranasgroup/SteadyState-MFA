@@ -1,11 +1,19 @@
-function [x,actcon] = initialize(emod)
+function [x,actcon] = initialize(emod, randscale)
+
+% Setting scale to variation using random function
+% If do not set scaling for randomization, set scaling to
+% 100 mmolglucose/gDW/h
+if nargin < 2
+    randscale = 100;
+end
+
 N = emod.vardata.N;
 nx = size(N,2);
 x0 = zeros(nx,1);
 A = [-N;N];
 vb = emod.vardata.vb;
 b = [-vb(:,1)-1e-7;vb(:,2)];
-x0 = x0 + 100*rand(size(x0));
+x0 = x0 + randscale*rand(size(x0));
 xb = vb(emod.vardata.vfree,:);
 opt = optimset('Display','off','MaxFunEvals',10000000,'TolCon',0);%,'ConstraintTolerance',-1e-7);
 x = fmincon(@(x) 1,x0,A,b,[],[],[],[],[],opt);

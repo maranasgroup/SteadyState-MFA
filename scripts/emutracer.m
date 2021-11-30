@@ -61,6 +61,7 @@ mfamodel.mapnode = mfamodel.mapnode(mcut);
 nemu = zeros(size(mfamodel.mapnode));
 nemu = nemu(:);
 for i = 1:length(mfamodel.mapnode)
+    %disp(i)
     mfamodel.mapnode(i).emu1 = makeallmu(mfamodel.mapnode(i).emu1);
 end
 emus = [mfamodel.mapnode.emu1];

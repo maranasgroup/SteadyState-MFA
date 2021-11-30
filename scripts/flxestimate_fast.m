@@ -1,4 +1,4 @@
-function [res, foptCell] = flxestimate_fast(emod)
+function [res, foptCell] = flxestimate_fast(emod, randscale)
 % Flux estimation function
 % Sarat's flxestimate
 % First, run non-linear SSR minimization with step size 1e-6
@@ -7,6 +7,13 @@ function [res, foptCell] = flxestimate_fast(emod)
 % Second, best solutions among multistart runs are selected
 %   for subsequent run with step size of MATLAB's limit (eps)
 %   to check for convergence
+
+% Setting scale to variation using random function
+% If do not set scaling for randomization, set scaling to
+% 100 mmolglucose/gDW/h
+if nargin < 2
+    randscale = 100;
+end
 
 N = emod.vardata.N;
 nu = emod.vardata.nu;
@@ -21,7 +28,7 @@ nms = emod.options.multistart;
 fopt = Inf;
 foptCell = zeros(nms,1);
 for i = 1:nms
-    [x,actcon] = initialize(emod);
+    [x,actcon] = initialize(emod,randscale);
     [xf,f,~,actcon] = lsqsolve(x,emod,A,b,actcon);
     foptCell(i) = f;
     if f<fopt

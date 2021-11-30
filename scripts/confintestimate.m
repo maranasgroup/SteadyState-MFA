@@ -126,6 +126,7 @@ xbest = x;
 fbest = impres.fmin;
 Aex(:,vrev) = 0;
 for i = 1:nconfs
+    fprintf(strcat('Start find conf int for rxn # ', num2str(i), '\n'));
     Aeq = Aex(i,:)*N1;
     [range,ximp,fimp] = flxlimcalc(x,A,b,actcon,Aeq,model,yb(i,:),r,W,J);
     ybactual(i,:) = range;

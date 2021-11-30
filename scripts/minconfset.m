@@ -141,8 +141,8 @@ for i = 1:length(bdry_ind)
             r2 = 0;
         end
         if abs(r1-r2)<1e-5
-            flx_ind(j) = [];
             ncpl(flx_ind(j))=true;
+            flx_ind(j) = [];
         end
     end
 end
